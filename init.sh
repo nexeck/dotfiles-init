@@ -96,7 +96,11 @@ done
 
 # --- Proton Pass & SSH Agent ---
 echo "==> Configuring Proton Pass SSH Agent..."
-pass-cli login
+if ! pass-cli vault list >/dev/null 2>&1; then
+    pass-cli login
+else
+    echo "Already logged in to Proton Pass."
+fi
 pass-cli ssh-agent daemon start
 
 export SSH_AUTH_SOCK="$HOME/.ssh/proton-pass-agent.sock"
