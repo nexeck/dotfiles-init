@@ -80,3 +80,37 @@ if ! command -v port >/dev/null 2>&1; then
     echo "Running installer (requires sudo)..."
     sudo installer -pkg "${pkg_file}" -target /
 fi
+
+# --- Base Tools ---
+echo "==> Installing Base Tools (chezmoi, pass-cli)..."
+for tool in chezmoi pass-cli; do
+    if ! brew list "$tool" >/dev/null 2>&1; then
+        # Handle pass-cli tap if needed (keeping original tap logic)
+        if [ "$tool" == "pass-cli" ]; then
+            brew install protonpass/tap/pass-cli
+        else
+            brew install "$tool"
+        fi
+    fi
+done
+
+# --- Proton Pass & SSH Agent ---
+echo "==> Configuring Proton Pass SSH Agent..."
+pass-cli login
+pass-cli ssh-agent daemon start
+
+export SSH_AUTH_SOCK="$HOME/.ssh/proton-pass-agent.sock"
+
+# Wait for socket to be ready
+echo "Waiting for SSH agent socket..."
+for i in {1..10}; do
+    if [ -S "$SSH_AUTH_SOCK" ]; then
+        echo "SSH agent is ready."
+        break
+    fi
+    sleep 0.5
+done
+
+if [ ! -S "$SSH_AUTH_SOCK" ]; then
+    echo "Warning: SSH agent socket not found at $SSH_AUTH_SOCK"
+fi
