@@ -114,3 +114,15 @@ done
 if [ ! -S "$SSH_AUTH_SOCK" ]; then
     echo "Warning: SSH agent socket not found at $SSH_AUTH_SOCK"
 fi
+
+# --- Chezmoi ---
+echo "==> Initializing Dotfiles with chezmoi..."
+if [ -d "$HOME/.local/share/chezmoi" ]; then
+    echo "Existing chezmoi directory found. Updating..."
+    chezmoi update --apply
+else
+    echo "Initializing new chezmoi repository..."
+    chezmoi init --apply --ssh nexeck
+fi
+
+echo "Done! System initialized."
