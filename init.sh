@@ -89,7 +89,7 @@ echo "==> Checking MacPorts..."
 
 # --- Base Tools ---
 echo "==> Installing Base Tools (chezmoi, pass-cli)..."
-for tool in chezmoi pass-cli; do
+for tool in mise chezmoi pass-cli; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "Installing $tool..."
         if [ "$tool" == "pass-cli" ]; then
