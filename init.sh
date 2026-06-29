@@ -19,10 +19,11 @@ case "${unameOut}" in
     *)          echo "Error: This script only supports macOS." && exit 1 ;;
 esac
 
-osx_num=$(sw_vers -productVersion | awk -F '.' '{print $1}')
-# Handle legacy macOS 10.x
-if [ "$osx_num" -eq 10 ]; then
-    osx_num=$(sw_vers -productVersion | awk -F '.' '{print $1"."$2}')
+osx_major=$(sw_vers -productVersion | cut -d. -f1)
+if [ "$osx_major" -ge 11 ]; then
+    osx_num="$osx_major"
+else
+    osx_num=$(sw_vers -productVersion | cut -d. -f1-2)
 fi
 
 echo "Detected macOS version: $osx_num"
@@ -41,6 +42,12 @@ elif [ -f /usr/local/bin/brew ]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 
+# Install jq for robust JSON parsing
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq..."
+    brew install jq
+fi
+
 # --- MacPorts ---
 echo "==> Checking MacPorts..."
 if ! command -v port >/dev/null 2>&1; then
@@ -48,14 +55,13 @@ if ! command -v port >/dev/null 2>&1; then
 
     # Get latest release data
     release_json=$(curl -fsSL "https://api.github.com/repos/macports/macports-base/releases/latest")
-    macports_tag=$(echo "$release_json" | grep '"tag_name"' | sed 's/.*"tag_name": *"\(.*\)".*/\1/')
+    macports_tag=$(echo "$release_json" | jq -r '.tag_name')
     macports_version="${macports_tag#v}"
 
-    # Robust matching: Look for the PKG that matches the OS major version exactly
-    # We use a more specific grep to avoid matching '10.10' when we want '10' etc.
-    pkg_name=$(echo "$release_json" | grep '"name"' | grep -E "MacPorts-${macports_version}-${osx_num}(-[^.]*)?\.pkg\"" | head -1 | sed 's/.*"name": *"\(.*\)".*/\1/')
+    # Robust matching with jq
+    pkg_name=$(echo "$release_json" | jq -r ".assets[] | select(.name | test(\"MacPorts-${macports_version}-${osx_num}(-[^.]*)?\\.pkg\")) | .name" | head -1)
 
-    if [ -z "${pkg_name}" ]; then
+    if [ -z "${pkg_name}" ] || [ "${pkg_name}" == "null" ]; then
         echo "Error: No MacPorts package found for macOS ${osx_num}" && exit 1
     fi
 
@@ -84,8 +90,8 @@ fi
 # --- Base Tools ---
 echo "==> Installing Base Tools (chezmoi, pass-cli)..."
 for tool in chezmoi pass-cli; do
-    if ! brew list "$tool" >/dev/null 2>&1; then
-        # Handle pass-cli tap if needed (keeping original tap logic)
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "Installing $tool..."
         if [ "$tool" == "pass-cli" ]; then
             brew install protonpass/tap/pass-cli
         else
