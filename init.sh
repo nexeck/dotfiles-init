@@ -120,7 +120,11 @@ if ! pass-cli vault list >/dev/null 2>&1; then
 else
     echo "Already logged in to Proton Pass."
 fi
-pass-cli ssh-agent daemon start
+if ! pass-cli ssh-agent daemon status | grep -q "Status:[[:space:]]*running"; then
+    pass-cli ssh-agent daemon start
+else
+    echo "Proton Pass SSH Agent is already running."
+fi
 
 export SSH_AUTH_SOCK="$HOME/.ssh/proton-pass-agent.sock"
 
