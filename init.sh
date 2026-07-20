@@ -55,11 +55,11 @@ if ! command -v port >/dev/null 2>&1; then
 
     # Get latest release data
     release_json=$(curl -fsSL "https://api.github.com/repos/macports/macports-base/releases/latest")
-    macports_tag=$(echo "$release_json" | jq -r '.tag_name')
+    macports_tag=$(printf '%s\n' "$release_json" | jq -r '.tag_name')
     macports_version="${macports_tag#v}"
 
     # Robust matching with jq
-    pkg_name=$(echo "$release_json" | jq -r ".assets[] | select(.name | test(\"MacPorts-${macports_version}-${osx_num}(-[^.]*)?\\.pkg\")) | .name" | head -1)
+    pkg_name=$(printf '%s\n' "$release_json" | jq -r --arg version "$macports_version" --arg os "$osx_num" '.assets[] | select(.name | test("MacPorts-" + $version + "-" + $os + "(-[^.]*)?\\.pkg")) | .name' | head -1)
 
     if [ -z "${pkg_name}" ] || [ "${pkg_name}" == "null" ]; then
         echo "Error: No MacPorts package found for macOS ${osx_num}" && exit 1
