@@ -50,45 +50,45 @@ fi
 
 # --- MacPorts ---
 echo "==> Checking MacPorts..."
-# if ! command -v port >/dev/null 2>&1; then
-#     echo "Installing MacPorts for macOS $osx_num..."
+if ! command -v port >/dev/null 2>&1; then
+    echo "Installing MacPorts for macOS $osx_num..."
 
-#     # Get latest release data
-#     release_json=$(curl -fsSL "https://api.github.com/repos/macports/macports-base/releases/latest")
-#     macports_tag=$(echo "$release_json" | jq -r '.tag_name')
-#     macports_version="${macports_tag#v}"
+    # Get latest release data
+    release_json=$(curl -fsSL "https://api.github.com/repos/macports/macports-base/releases/latest")
+    macports_tag=$(echo "$release_json" | jq -r '.tag_name')
+    macports_version="${macports_tag#v}"
 
-#     # Robust matching with jq
-#     pkg_name=$(echo "$release_json" | jq -r ".assets[] | select(.name | test(\"MacPorts-${macports_version}-${osx_num}(-[^.]*)?\\.pkg\")) | .name" | head -1)
+    # Robust matching with jq
+    pkg_name=$(echo "$release_json" | jq -r ".assets[] | select(.name | test(\"MacPorts-${macports_version}-${osx_num}(-[^.]*)?\\.pkg\")) | .name" | head -1)
 
-#     if [ -z "${pkg_name}" ] || [ "${pkg_name}" == "null" ]; then
-#         echo "Error: No MacPorts package found for macOS ${osx_num}" && exit 1
-#     fi
+    if [ -z "${pkg_name}" ] || [ "${pkg_name}" == "null" ]; then
+        echo "Error: No MacPorts package found for macOS ${osx_num}" && exit 1
+    fi
 
-#     pkg_url="https://github.com/macports/macports-base/releases/download/${macports_tag}/${pkg_name}"
-#     pkg_file="${work_dir}/${pkg_name}"
+    pkg_url="https://github.com/macports/macports-base/releases/download/${macports_tag}/${pkg_name}"
+    pkg_file="${work_dir}/${pkg_name}"
 
-#     echo "Downloading ${pkg_name}..."
-#     curl -fsSL -o "${pkg_file}" "${pkg_url}"
+    echo "Downloading ${pkg_name}..."
+    curl -fsSL -o "${pkg_file}" "${pkg_url}"
 
-#     # Optional GPG Check
-#     if command -v gpg >/dev/null 2>&1; then
-#         echo "Verifying signature..."
-#         curl -fsSL -o "${pkg_file}.asc" "${pkg_url}.asc"
-#         if ! gpg --list-keys "keymaster@macports.org" >/dev/null 2>&1; then
-#             curl -fsSL "https://trac.macports.org/static/gpg/macports-keyring.gpg" | gpg --import
-#         fi
-#         gpg --verify "${pkg_file}.asc" "${pkg_file}"
-#     else
-#         echo "Warning: gpg not found, skipping signature verification."
-#     fi
+    # Optional GPG Check
+    if command -v gpg >/dev/null 2>&1; then
+        echo "Verifying signature..."
+        curl -fsSL -o "${pkg_file}.asc" "${pkg_url}.asc"
+        if ! gpg --list-keys "keymaster@macports.org" >/dev/null 2>&1; then
+            curl -fsSL "https://trac.macports.org/static/gpg/macports-keyring.gpg" | gpg --import
+        fi
+        gpg --verify "${pkg_file}.asc" "${pkg_file}"
+    else
+        echo "Warning: gpg not found, skipping signature verification."
+    fi
 
-#     echo "Running installer (requires sudo)..."
-#     sudo installer -pkg "${pkg_file}" -target /
-# fi
+    echo "Running installer (requires sudo)..."
+    sudo installer -pkg "${pkg_file}" -target /
+fi
 
 # --- Base Tools ---
-echo "==> Installing Base Tools (chezmoi, pass-cli)..."
+echo "==> Installing Base Tools (mise, chezmoi, pass-cli)..."
 for tool in mise chezmoi pass-cli; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "Installing $tool..."
