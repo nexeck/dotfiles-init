@@ -28,6 +28,23 @@ fi
 
 echo "Detected macOS version: $osx_num"
 
+# --- Privileges App (Work Macbook Sudo) ---
+privileges_cli=""
+if [ -f "/Applications/Privileges.app/Contents/Resources/PrivilegesCLI" ]; then
+    privileges_cli="/Applications/Privileges.app/Contents/Resources/PrivilegesCLI"
+elif [ -f "$HOME/Applications/Privileges.app/Contents/Resources/PrivilegesCLI" ]; then
+    privileges_cli="$HOME/Applications/Privileges.app/Contents/Resources/PrivilegesCLI"
+elif command -v PrivilegesCLI >/dev/null 2>&1; then
+    privileges_cli="PrivilegesCLI"
+elif command -v privileges >/dev/null 2>&1; then
+    privileges_cli="privileges"
+fi
+
+if [ -n "$privileges_cli" ]; then
+    echo "==> Requesting admin privileges via Privileges app..."
+    "$privileges_cli" -a
+fi
+
 # --- Homebrew ---
 echo "==> Checking Homebrew..."
 if ! command -v brew >/dev/null 2>&1; then
