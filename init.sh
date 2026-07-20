@@ -30,14 +30,25 @@ echo "Detected macOS version: $osx_num"
 
 # --- Privileges App (Work Macbook Sudo) ---
 privileges_cli=""
-if [ -f "/Applications/Privileges.app/Contents/Resources/PrivilegesCLI" ]; then
-    privileges_cli="/Applications/Privileges.app/Contents/Resources/PrivilegesCLI"
-elif [ -f "$HOME/Applications/Privileges.app/Contents/Resources/PrivilegesCLI" ]; then
-    privileges_cli="$HOME/Applications/Privileges.app/Contents/Resources/PrivilegesCLI"
-elif command -v PrivilegesCLI >/dev/null 2>&1; then
-    privileges_cli="PrivilegesCLI"
-elif command -v privileges >/dev/null 2>&1; then
-    privileges_cli="privileges"
+for path in \
+    "/Applications/Privileges.app/Contents/MacOS/privileges" \
+    "/Applications/Privileges.app/Contents/MacOS/Privileges" \
+    "/Applications/Privileges.app/Contents/Resources/PrivilegesCLI" \
+    "$HOME/Applications/Privileges.app/Contents/MacOS/privileges" \
+    "$HOME/Applications/Privileges.app/Contents/MacOS/Privileges" \
+    "$HOME/Applications/Privileges.app/Contents/Resources/PrivilegesCLI"; do
+    if [ -f "$path" ]; then
+        privileges_cli="$path"
+        break
+    fi
+done
+
+if [ -z "$privileges_cli" ]; then
+    if command -v PrivilegesCLI >/dev/null 2>&1; then
+        privileges_cli="PrivilegesCLI"
+    elif command -v privileges >/dev/null 2>&1; then
+        privileges_cli="privileges"
+    fi
 fi
 
 if [ -n "$privileges_cli" ]; then
